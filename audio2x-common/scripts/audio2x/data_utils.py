@@ -33,8 +33,13 @@ def get_trt_cache_path(onnx_model_fpath, cmd):
     """
     # create a hash of the onnx model, trtexec and the arguments
     digest = hashlib.sha256()
-    digest.update(open(onnx_model_fpath, "rb").read())
-    digest.update(open(shutil.which("trtexec"), "rb").read())
+    with open(onnx_model_fpath, "rb") as f:
+        digest.update(f.read())
+    trtexec_fpath = shutil.which("trtexec")
+    if trtexec_fpath is None:
+        raise FileNotFoundError("trtexec not found in PATH; cannot compute the TRT cache key")
+    with open(trtexec_fpath, "rb") as f:
+        digest.update(f.read())
     digest.update(
         "".join(cmd[3:]).encode()
     )  # starting with 3 to skip the absolute path of trtexec, onnx and trt_model_fpath
